@@ -7,14 +7,13 @@ Automated workflow for creating, publishing, and analyzing Prolific surveys. Bui
 - **`config.yaml`** - Survey configuration (questions, rewards, participant settings)
 - **`prolific_helpers.py`** - Helper functions for Prolific API interactions
 - **`Halloween Demo Prolific.ipynb`** - Main notebook workflow
+- **`.env.example`** - Template for environment variables
 
 ## Setup
 
-1. Set environment variables:
+1. Copy `.env.example` to `.env` and add your credentials:
    ```bash
-   PROLIFIC_API_TOKEN=your_token
-   PROLIFIC_WORKSPACE_ID=your_workspace_id
-   PROLIFIC_PROJECT_ID=your_project_id
+   cp .env.example .env
    ```
 
 2. Install dependencies:
