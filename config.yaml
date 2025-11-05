@@ -2,18 +2,19 @@
 
 # Study Parameters
 study:
-  name: "One question about the new iPhone color"
-  description: "One question about the new iPhone color"
+  name: "One mutiple choice question about Halloween this year"
+  description: "One mutiple choice question about Halloween this year"
   privacy_notice: "Your data will be used for research purposes only and will be kept confidential."
 
 # Survey Question
 survey:
-  title: "One question about the new iPhone color"
-  question_text: "Do you think the new iPhone organge color would go well with a pink phone case?"
+  title: "One mutiple choice question about Halloween this year"
+  question_text: "What costume do you think was the most unique this year?"
   answers:
-    - "Yes, it would look great!"
-    - "No, it would look bad!"
-    - "I don't care"
+    - "Louvre security guard costume"
+    - "67 costume"
+    - "Labubu"
+    - "Rumi from KPop Demon Hunters"
 
 # Participant Settings
 participants:
