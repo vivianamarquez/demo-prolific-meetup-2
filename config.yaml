@@ -1,0 +1,32 @@
+# Prolific Study Configuration
+
+# Study Parameters
+study:
+  name: "One question about the new iPhone color"
+  description: "One question about the new iPhone color"
+  privacy_notice: "Your data will be used for research purposes only and will be kept confidential."
+
+# Survey Question
+survey:
+  title: "One question about the new iPhone color"
+  question_text: "Do you think the new iPhone organge color would go well with a pink phone case?"
+  answers:
+    - "Yes, it would look great!"
+    - "No, it would look bad!"
+    - "I don't care"
+
+# Participant Settings
+participants:
+  reward: 1  # in dollars
+  total_participants: 20
+  estimated_time: 1  # in minutes
+  max_time: 2  # in minutes
+
+# Device Compatibility
+device_compatibility:
+  - desktop
+  - tablet
+  - mobile
+
+# Timezone for results display
+timezone: "America/Los_Angeles"
