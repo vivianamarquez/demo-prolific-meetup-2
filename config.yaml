@@ -11,11 +11,8 @@ survey:
   title: "One mutiple choice question about Halloween this year"
   question_text: "What costume do you think was the most unique this year?"
   answers:
-    - "Louvre security guard costume"
-    - "67 costume"
-    - "Labubu"
-    - "Rumi from KPop Demon Hunters"
-    - "I don't know any of these"
+    - "Louvre security guard"
+    - "67"
 
 # Participant Settings
 participants:
