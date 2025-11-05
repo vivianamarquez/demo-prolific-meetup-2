@@ -234,13 +234,51 @@ def show_study_results(study_id: str, headers: dict, timezone_str: str = "Americ
     return df
 
 
+def find_question_column(df: pd.DataFrame, question_text: str) -> str:
+    """
+    Find the question column in the dataframe, trying exact match first,
+    then checking if it's in the columns list.
+
+    Args:
+        df: DataFrame containing survey responses
+        question_text: The question text from config
+
+    Returns:
+        str: The actual column name in the dataframe
+    """
+    # Check if question text is exactly in columns
+    if question_text in df.columns:
+        return question_text
+
+    # Otherwise, return the last column (typically the survey question)
+    # But first check if there are any non-standard columns after the standard Prolific ones
+    standard_prolific_cols = ['Submission id', 'Participant id', 'Status', 'Started at',
+                               'Completed at', 'Time taken', 'Age', 'Sex']
+
+    # Find columns that are not standard Prolific columns - these are likely survey questions
+    survey_columns = [col for col in df.columns if col not in standard_prolific_cols
+                      and not col.startswith('Custom ')
+                      and col not in ['Reviewed at', 'Archived at', 'Completion code', 'Country of birth',
+                                      'Country of residence', 'Nationality', 'Language', 'Student status',
+                                      'Employment status', 'Long-term health condition/disability',
+                                      'Fluent languages', 'Sexual orientation',
+                                      'Highest education level completed', 'Degree subject',
+                                      'Work role', 'Submission approval rate']]
+
+    if survey_columns:
+        return survey_columns[0]  # Return first survey question column
+
+    # If all else fails, return the last column
+    return df.columns[-1]
+
+
 def plot_survey_responses(df: pd.DataFrame, question_column: str, wrap_width: int = 32, figsize: tuple = None):
     """
     Create a horizontal bar chart of survey responses.
 
     Args:
         df: DataFrame containing survey responses
-        question_column: Name of the column containing responses
+        question_column: Name of the column containing responses (will auto-detect if not found)
         wrap_width: Width for wrapping long labels (default: 32)
         figsize: Figure size as (width, height). If None, auto-calculated based on response count
 
@@ -250,8 +288,11 @@ def plot_survey_responses(df: pd.DataFrame, question_column: str, wrap_width: in
     import matplotlib.pyplot as plt
     from textwrap import fill
 
+    # Find the actual question column
+    actual_column = find_question_column(df, question_column)
+
     response_counts = (
-        df[question_column]
+        df[actual_column]
         .dropna()
         .astype(str)
         .value_counts()
@@ -262,8 +303,8 @@ def plot_survey_responses(df: pd.DataFrame, question_column: str, wrap_width: in
 
     # Auto-calculate height if not specified
     if figsize is None:
-        height = max(6, 0.6 * len(response_counts))
-        figsize = (12, height)
+        height = max(4, 0.5 * len(response_counts))
+        figsize = (10, height)
 
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -274,6 +315,128 @@ def plot_survey_responses(df: pd.DataFrame, question_column: str, wrap_width: in
     ax.set_ylabel("Response")
 
     ax.invert_yaxis()
+
+    fig.tight_layout()
+
+    return fig, ax
+
+
+def age_to_generation(age) -> str:
+    """
+    Convert age to generation label.
+
+    Args:
+        age: Age in years (can be int, float, or string)
+
+    Returns:
+        str: Generation label with age range, or "Unknown" if age is invalid
+    """
+    try:
+        # Convert to int if it's a string or float
+        age_int = int(float(age))
+    except (ValueError, TypeError):
+        return "Unknown"
+
+    if age_int < 18:
+        return "Gen Alpha (under 18)"
+    elif age_int <= 27:
+        return "Gen Z (18-27)"
+    elif age_int <= 43:
+        return "Millennial (28-43)"
+    elif age_int <= 59:
+        return "Gen X (44-59)"
+    elif age_int <= 78:
+        return "Baby Boomer (60-78)"
+    else:
+        return "Silent Generation (79+)"
+
+
+def plot_responses_by_generation(df: pd.DataFrame, question_column: str, age_column: str = "Age", figsize: tuple = (10, 6)):
+    """
+    Create a grouped bar chart of survey responses by generation.
+
+    Args:
+        df: DataFrame containing survey responses
+        question_column: Name of the column containing responses (will auto-detect if not found)
+        age_column: Name of the column containing age data (default: "Age")
+        figsize: Figure size as (width, height)
+
+    Returns:
+        matplotlib figure and axes objects
+    """
+    import matplotlib.pyplot as plt
+
+    # Find the actual question column
+    actual_column = find_question_column(df, question_column)
+
+    # Create a copy to avoid modifying original
+    df_copy = df.copy()
+
+    # Convert age to generation
+    df_copy['Generation'] = df_copy[age_column].apply(age_to_generation)
+
+    # Create crosstab
+    crosstab = pd.crosstab(df_copy['Generation'], df_copy[actual_column])
+
+    # Sort generations by typical age order
+    generation_order = [
+        "Gen Alpha (under 18)",
+        "Gen Z (18-27)",
+        "Millennial (28-43)",
+        "Gen X (44-59)",
+        "Baby Boomer (60-78)",
+        "Silent Generation (79+)"
+    ]
+
+    # Filter to only generations present in data
+    generation_order = [gen for gen in generation_order if gen in crosstab.index]
+    crosstab = crosstab.reindex(generation_order)
+
+    # Create plot
+    fig, ax = plt.subplots(figsize=figsize)
+    crosstab.plot(kind='bar', ax=ax, rot=45, width=0.8)
+
+    ax.set_title(f"{question_column}\nby Generation", fontsize=14, pad=20)
+    ax.set_xlabel("Generation", fontsize=12)
+    ax.set_ylabel("Count", fontsize=12)
+    ax.legend(title="Response", bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.grid(axis='y', alpha=0.3)
+
+    fig.tight_layout()
+
+    return fig, ax
+
+
+def plot_responses_by_gender(df: pd.DataFrame, question_column: str, gender_column: str = "Sex", figsize: tuple = (9, 5)):
+    """
+    Create a grouped bar chart of survey responses by gender.
+
+    Args:
+        df: DataFrame containing survey responses
+        question_column: Name of the column containing responses (will auto-detect if not found)
+        gender_column: Name of the column containing gender data (default: "Sex")
+        figsize: Figure size as (width, height)
+
+    Returns:
+        matplotlib figure and axes objects
+    """
+    import matplotlib.pyplot as plt
+
+    # Find the actual question column
+    actual_column = find_question_column(df, question_column)
+
+    # Create crosstab
+    crosstab = pd.crosstab(df[gender_column], df[actual_column])
+
+    # Create plot
+    fig, ax = plt.subplots(figsize=figsize)
+    crosstab.plot(kind='bar', ax=ax, rot=0, width=0.7)
+
+    ax.set_title(f"{question_column}\nby Gender", fontsize=14, pad=20)
+    ax.set_xlabel("Gender", fontsize=12)
+    ax.set_ylabel("Count", fontsize=12)
+    ax.legend(title="Response", bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.grid(axis='y', alpha=0.3)
 
     fig.tight_layout()
 
